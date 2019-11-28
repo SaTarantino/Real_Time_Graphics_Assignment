@@ -56,9 +56,10 @@ private:
 	PositionClass* m_Position;
 	CameraClass* m_Camera;
 	LightClass* m_Light;
-	ModelClass* m_Model1;
-	ModelClass* m_Model2;
-	BumpModelClass* m_Model3;
+	ModelClass* m_TerrainModel;
+	ModelClass* m_Delta747Model;
+	ModelClass* m_ControlTower;
+	ModelClass* m_AirfieldModel;
 };
 
 #endif

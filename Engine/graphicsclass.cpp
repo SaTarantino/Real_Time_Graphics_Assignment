@@ -13,9 +13,9 @@ GraphicsClass::GraphicsClass()
 	m_Light = 0;
 	m_Position = 0;
 	m_Camera = 0;
-	m_Model1 = 0;
-	m_Model2 = 0;
-	m_Model3 = 0;
+	m_TerrainModel = 0;
+	m_Delta747Model = 0;
+	m_ControlTower = 0;
 }
 
 
@@ -128,51 +128,62 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 	m_Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
 	m_Light->SetSpecularPower(64.0f);
 
-	// Create the model object.
-	m_Model1 = new ModelClass;
-	if(!m_Model1)
+	// Create and Initialize the Terrain model.
+	m_TerrainModel = new ModelClass;
+	if(!m_TerrainModel)
 	{
 		return false;
 	}
 
-	// Initialize the model object.
-	result = m_Model1->Initialize(m_D3D->GetDevice(), "../Engine/data/airfieldModel.txt", L"../Engine/data/airfieldTexture.dds");
+	result = m_TerrainModel->Initialize(m_D3D->GetDevice(), "../Engine/data/terrainModel.txt", L"../Engine/data/grass2.dds");
 	if(!result)
 	{
-		MessageBox(hwnd, L"Could not initialize the first model object.", L"Error", MB_OK);
+		MessageBox(hwnd, L"Could not initialize the Terrain model.", L"Error", MB_OK);
 		return false;
 	}
 
-	// Create the second model object.
-	m_Model2 = new ModelClass;
-	if(!m_Model2)
+	// Create and Initialize the Delta 747 Model.
+	m_Delta747Model = new ModelClass;
+	if(!m_Delta747Model)
 	{
 		return false;
 	}
 
-	// Initialize the second model object.
-	result = m_Model2->Initialize(m_D3D->GetDevice(), "../Engine/data/Airliner757.txt", L"../Engine/data/metal.dds");
+	result = m_Delta747Model->Initialize(m_D3D->GetDevice(), "../Engine/data/Airliner757.txt", L"../Engine/data/metal.dds");
 	if(!result)
 	{
-		MessageBox(hwnd, L"Could not initialize the second model object.", L"Error", MB_OK);
+		MessageBox(hwnd, L"Could not initialize the Delta 747 model.", L"Error", MB_OK);
 		return false;
 	}
 
-	//// Create the third bump model object for models with normal maps and related vectors.
-	//m_Model3 = new BumpModelClass;
-	//if(!m_Model3)
-	//{
-	//	return false;
-	//}
+	// Create and Initialize the Control Tower model.
+	m_ControlTower = new ModelClass;
+	if(!m_ControlTower)
+	{
+		return false;
+	}
 
-	//// Initialize the bump model object.
-	//result = m_Model3->Initialize(m_D3D->GetDevice(), "../Engine/data/cube.txt", L"../Engine/data/stone.dds", 
-	//							  L"../Engine/data/normal.dds");
-	//if(!result)
-	//{
-	//	MessageBox(hwnd, L"Could not initialize the third model object.", L"Error", MB_OK);
-	//	return false;
-	//}
+	result = m_ControlTower->Initialize(m_D3D->GetDevice(), "../Engine/data/controlTower.txt", L"../Engine/data/controlTowerTexture.dds");
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the Control Tower model.", L"Error", MB_OK);
+		return false;
+	}
+
+	// Create and Initialize the Airfield model.
+	m_AirfieldModel = new ModelClass;
+	if (!m_AirfieldModel)
+	{
+		return false;
+	}
+
+	result = m_AirfieldModel->Initialize(m_D3D->GetDevice(), "../Engine/data/bigAirfieldModel.txt", L"../Engine/data/airfieldTexture.dds");
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the Airfield model.", L"Error", MB_OK);
+		return false;
+	}
+
 
 	return true;
 }
@@ -181,26 +192,33 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 void GraphicsClass::Shutdown()
 {
 	// Release the model objects.
-	if(m_Model1)
+	if(m_TerrainModel)
 	{
-		m_Model1->Shutdown();
-		delete m_Model1;
-		m_Model1 = 0;
+		m_TerrainModel->Shutdown();
+		delete m_TerrainModel;
+		m_TerrainModel = 0;
 	}
 
-	if(m_Model2)
+	if(m_Delta747Model)
 	{
-		m_Model2->Shutdown();
-		delete m_Model2;
-		m_Model2 = 0;
+		m_Delta747Model->Shutdown();
+		delete m_Delta747Model;
+		m_Delta747Model = 0;
 	}
 
-	/*if(m_Model3)
+	if(m_ControlTower)
 	{
-		m_Model3->Shutdown();
-		delete m_Model3;
-		m_Model3 = 0;
-	}*/
+		m_ControlTower->Shutdown();
+		delete m_ControlTower;
+		m_ControlTower = 0;
+	}
+
+	if (m_AirfieldModel)
+	{
+		m_AirfieldModel->Shutdown();
+		delete m_AirfieldModel;
+		m_AirfieldModel = 0;
+	}
 
 	// Release the light object.
 	if(m_Light)
@@ -348,7 +366,7 @@ bool GraphicsClass::HandleMovementInput(float frameTime)
 bool GraphicsClass::Render()
 {
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix;
-	XMMATRIX airplaneScale = XMMatrixScaling(0.3f, 0.3f, 0.3f);
+	XMMATRIX airplaneScale = XMMatrixScaling(0.45f, 0.45f, 0.45f);
 	bool result;
 
 	static float rotation = 0.0f;
@@ -367,56 +385,80 @@ bool GraphicsClass::Render()
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_D3D->GetProjectionMatrix(projectionMatrix);
 
-	// Setup the rotation and translation of the first model.
-	translateMatrix = XMMatrixTranslation(-3.5f, 0.0f, 0.0f);
+
+
+	// Setup the rotation and translation of the Terrain model.
+	translateMatrix = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+
+	worldMatrix = XMMatrixScaling(10.f, 10.f, 10.5f);
+
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
-	// Render the first model using the texture shader.
-	m_Model1->Render(m_D3D->GetDeviceContext());
-	result = m_ShaderManager->RenderTextureShader(m_D3D->GetDeviceContext(), m_Model1->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, 
-												  m_Model1->GetTexture());
+	// Render the Terrain model using the texture shader.
+	m_TerrainModel->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderTextureShader(m_D3D->GetDeviceContext(), m_TerrainModel->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, 
+												  m_TerrainModel->GetTexture());
 	if(!result)
 	{
 		return false;
 	}
 
-	// Setup the rotation and translation of the second model.
+	// Setup the rotation and translation of the Delta 747 model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
 	worldMatrix = XMMatrixMultiply(worldMatrix, airplaneScale);
 
 	worldMatrix = XMMatrixMultiply(worldMatrix, XMMatrixTranslation(-3.0f, 0.0f, 0.0f));
 
-	//DA USARE PER FAR MUOVERE LE COSE 
-	translateMatrix = XMMatrixTranslation(-3.5f, 10.0f + sin(timeGetTime() / 250.0f), 10.0f + sin(timeGetTime() / 250.0f));
+	// Move the Delta 747 model. 
+	translateMatrix = XMMatrixTranslation(-3.5f, 10.0f + sin(timeGetTime() / 500.0f), 10.0f + sin(timeGetTime() / 500.0f));
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 	
 		
-	// Render the second model using the light shader.
-	m_Model2->Render(m_D3D->GetDeviceContext());
-	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_Model2->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, 
-									   m_Model2->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), 
+	// Render the Delta 747 using the light shader.
+	m_Delta747Model->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_Delta747Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, 
+									   m_Delta747Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), 
 									   m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 	if(!result)
 	{
 		return false;
 	}
 
-	//// Setup the rotation and translation of the third model.
-	//m_D3D->GetWorldMatrix(worldMatrix);
-	//worldMatrix = XMMatrixRotationX(rotation / 3.0f);
-	//translateMatrix = XMMatrixTranslation(3.5f, 0.0f, 0.0f);
-	//worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+	
+	// Setup the rotation and translation of the Control Tower model.
+	m_D3D->GetWorldMatrix(worldMatrix);
 
-	//// Render the third model using the bump map shader.
-	//m_Model3->Render(m_D3D->GetDeviceContext());
-	//result = m_ShaderManager->RenderBumpMapShader(m_D3D->GetDeviceContext(), m_Model3->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, 
-	//											  m_Model3->GetColorTexture(), m_Model3->GetNormalMapTexture(), m_Light->GetDirection(), 
-	//											  m_Light->GetDiffuseColor());
-	//if(!result)
-	//{
-	//	return false;
-	//}
+	translateMatrix = XMMatrixTranslation(50.0f, 0.0f, 0.0f);
+	
+	worldMatrix = XMMatrixScaling(1.5f, 1.5f, 1.5f);
+
+	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+
+	// Render the Control Tower model.
+	m_ControlTower->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_ControlTower->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+										m_ControlTower->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+										m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	if(!result)
+	{
+		return false;
+	}
+
+	// Setup the rotation and translation of the Airfield model.
+	m_D3D->GetWorldMatrix(worldMatrix);
+	translateMatrix = XMMatrixTranslation(-3.0f, 0.05f, 0.0f);
+	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+
+	// Render the Airfield model.
+	m_AirfieldModel->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_AirfieldModel->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+		m_AirfieldModel->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	if (!result)
+	{
+		return false;
+	}
 
 	// Present the rendered scene to the screen.
 	m_D3D->EndScene();
