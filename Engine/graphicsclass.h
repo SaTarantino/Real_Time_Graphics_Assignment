@@ -57,6 +57,7 @@ private:
 	CameraClass* m_Camera;
 	LightClass* m_Light;
 	ModelClass* m_TerrainModel;
+	ModelClass* m_skyDomes;
 	ModelClass* m_Delta747Model;
 	ModelClass* m_ControlTower;
 	ModelClass* m_AirfieldModel;

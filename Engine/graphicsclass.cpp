@@ -101,7 +101,7 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 	}
 
 	// Set the initial position and rotation of the viewer.
-	m_Position->SetPosition(0.0f, 0.0f, -10.0f);
+	m_Position->SetPosition(0.0f, 10.0f, -20.0f);
 	m_Position->SetRotation(0.0f, 0.0f, 0.0f);
 
 	// Create the camera object.
@@ -135,10 +135,24 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 		return false;
 	}
 
-	result = m_TerrainModel->Initialize(m_D3D->GetDevice(), "../Engine/data/terrainModel.txt", L"../Engine/data/grass2.dds");
+	result = m_TerrainModel->Initialize(m_D3D->GetDevice(), "../Engine/data/terraintV2.txt", L"../Engine/data/giandoTextures.dds");
 	if(!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Terrain model.", L"Error", MB_OK);
+		return false;
+	}
+
+	// Create and Initialize the Sky-Domes model.
+	m_skyDomes = new ModelClass;
+	if (!m_skyDomes)
+	{
+		return false;
+	}
+
+	result = m_skyDomes->Initialize(m_D3D->GetDevice(), "../Engine/data/skyDomes.txt", L"../Engine/data/skyTexture.dds");
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the Sky-Domes model.", L"Error", MB_OK);
 		return false;
 	}
 
@@ -197,6 +211,13 @@ void GraphicsClass::Shutdown()
 		m_TerrainModel->Shutdown();
 		delete m_TerrainModel;
 		m_TerrainModel = 0;
+	}
+
+	if (m_skyDomes)
+	{
+		m_skyDomes->Shutdown();
+		delete m_skyDomes;
+		m_skyDomes = 0;
 	}
 
 	if(m_Delta747Model)
@@ -368,7 +389,7 @@ bool GraphicsClass::Render()
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix;
 	XMMATRIX airplaneScale = XMMatrixScaling(0.45f, 0.45f, 0.45f);
 	bool result;
-
+	
 	static float rotation = 0.0f;
 
 	// Update the rotation variable each frame.
@@ -387,6 +408,24 @@ bool GraphicsClass::Render()
 
 
 
+	// Setup the rotation and translation of the Sky-Domes model.
+	//XMFLOAT3 cameraPosition;
+	//cameraPosition = m_Camera->GetPosition;
+
+	//translateMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y, cameraPosition.z);
+	//translateMatrix = XMMatrixTransformation(m_Camera->GetPosition);
+
+	//worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+	worldMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
+	// Render the Sky-Domes model using the texture shader.
+	m_skyDomes->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderTextureShader(m_D3D->GetDeviceContext(), m_skyDomes->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+												m_skyDomes->GetTexture());
+	if (!result)
+	{
+		return false;
+	}
+
 	// Setup the rotation and translation of the Terrain model.
 	translateMatrix = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
@@ -402,6 +441,8 @@ bool GraphicsClass::Render()
 	{
 		return false;
 	}
+
+	
 
 	// Setup the rotation and translation of the Delta 747 model.
 	m_D3D->GetWorldMatrix(worldMatrix);
