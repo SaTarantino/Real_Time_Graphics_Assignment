@@ -33,7 +33,6 @@ public:
 	void MoveBackward(bool);
 	void MoveUpward(bool);
 	void MoveDownward(bool);
-	//void MoveLeft(bool);
 	void TurnLeft(bool);
 	void TurnRight(bool);
 	void LookUpward(bool);

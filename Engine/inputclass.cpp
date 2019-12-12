@@ -314,32 +314,10 @@ bool InputClass::IsKPressed()
 }
 
 
-bool InputClass::IsUPressed()
-{
-	// Do a bitwise and on the keyboard state to check if the key is currently being pressed.
-	if(m_keyboardState[DIK_U] & 0x80)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-
 bool InputClass::IsJPressed()
 {
 	// Do a bitwise and on the keyboard state to check if the key is currently being pressed.
 	if(m_keyboardState[DIK_J] & 0x80)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-bool InputClass::IsOPressed()
-{
-	if (m_keyboardState[DIK_O] & 0x80)
 	{
 		return true;
 	}

@@ -101,7 +101,7 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 	}
 
 	// Set the initial position and rotation of the viewer.
-	m_Position->SetPosition(0.0f, 10.0f, -20.0f);
+	m_Position->SetPosition(10.0f, 15.0f, -100.0f);
 	m_Position->SetRotation(0.0f, 0.0f, 0.0f);
 
 	// Create the camera object.
@@ -110,9 +110,6 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 	{
 		return false;
 	}
-
-	// Set the initial position of the camera.
-	//m_Camera->SetPosition(0.0f, 0.0f, -10.0f);
 
 	// Create the light object.
 	m_Light = new LightClass;
@@ -135,7 +132,7 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 		return false;
 	}
 
-	result = m_TerrainModel->Initialize(m_D3D->GetDevice(), "../Engine/data/terraintV2.txt", L"../Engine/data/giandoTextures.dds");
+	result = m_TerrainModel->Initialize(m_D3D->GetDevice(), "../Engine/data/terrainModel.txt", L"../Engine/data/lol.dds");
 	if(!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Terrain model.", L"Error", MB_OK);
@@ -149,7 +146,7 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 		return false;
 	}
 
-	result = m_skyDomes->Initialize(m_D3D->GetDevice(), "../Engine/data/skyDomes.txt", L"../Engine/data/skyTexture.dds");
+	result = m_skyDomes->Initialize(m_D3D->GetDevice(), "../Engine/data/skyDome.txt", L"../Engine/data/skyTexture.dds");
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Sky-Domes model.", L"Error", MB_OK);
@@ -163,7 +160,7 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 		return false;
 	}
 
-	result = m_Delta747Model->Initialize(m_D3D->GetDevice(), "../Engine/data/Airliner757.txt", L"../Engine/data/metal.dds");
+	result = m_Delta747Model->Initialize(m_D3D->GetDevice(), "../Engine/data/tal16.txt", L"../Engine/data/metal.dds");
 	if(!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Delta 747 model.", L"Error", MB_OK);
@@ -200,6 +197,7 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 
 
 	return true;
+
 }
 
 
@@ -361,17 +359,11 @@ bool GraphicsClass::HandleMovementInput(float frameTime)
 	keyDown = m_Input->IsKPressed();
 	m_Position->MoveDownward(keyDown);
 
-	keyDown = m_Input->IsUPressed();
-	m_Position->LookUpward(keyDown);
-
-	keyDown = m_Input->IsOPressed();
+	keyDown = m_Input->IsLPressed();
 	m_Position->LookDownward(keyDown);
 
-	/*keyDown = m_Input->IsJPressed();
-	m_Position->MoveLeft(keyDown);*/
-
-	/*keyDown = m_Input->IsLPressed();
-	m_Position->LookDownward(keyDown);*/
+	keyDown = m_Input->IsJPressed();
+	m_Position->LookUpward(keyDown);
 
 	// Get the view point position/rotation.
 	m_Position->GetPosition(posX, posY, posZ);
@@ -388,6 +380,8 @@ bool GraphicsClass::Render()
 {
 	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix;
 	XMMATRIX airplaneScale = XMMatrixScaling(0.45f, 0.45f, 0.45f);
+	XMFLOAT3 cameraPosition;
+	
 	bool result;
 	
 	static float rotation = 0.0f;
@@ -406,17 +400,14 @@ bool GraphicsClass::Render()
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_D3D->GetProjectionMatrix(projectionMatrix);
 
-
-
+	// Get the position of the camera
+	cameraPosition = m_Camera->GetPosition();
+	
 	// Setup the rotation and translation of the Sky-Domes model.
-	//XMFLOAT3 cameraPosition;
-	//cameraPosition = m_Camera->GetPosition;
 
-	//translateMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y, cameraPosition.z);
-	//translateMatrix = XMMatrixTransformation(m_Camera->GetPosition);
-
-	//worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
-	worldMatrix = XMMatrixScaling(10.f, 10.f, 10.f);
+	//worldMatrix = XMMatrixTranslation(cameraPosition.x, 0, cameraPosition.z);
+	worldMatrix = XMMatrixScaling(100.f, 100.f, 100.f);
+	
 	// Render the Sky-Domes model using the texture shader.
 	m_skyDomes->Render(m_D3D->GetDeviceContext());
 	result = m_ShaderManager->RenderTextureShader(m_D3D->GetDeviceContext(), m_skyDomes->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
@@ -428,9 +419,6 @@ bool GraphicsClass::Render()
 
 	// Setup the rotation and translation of the Terrain model.
 	translateMatrix = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-
-	worldMatrix = XMMatrixScaling(10.f, 10.f, 10.5f);
-
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
 	// Render the Terrain model using the texture shader.
@@ -442,19 +430,15 @@ bool GraphicsClass::Render()
 		return false;
 	}
 
-	
-
 	// Setup the rotation and translation of the Delta 747 model.
+	// Move the Delta 747 model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
-	worldMatrix = XMMatrixMultiply(worldMatrix, airplaneScale);
-
-	worldMatrix = XMMatrixMultiply(worldMatrix, XMMatrixTranslation(-3.0f, 0.0f, 0.0f));
-
-	// Move the Delta 747 model. 
-	translateMatrix = XMMatrixTranslation(-3.5f, 10.0f + sin(timeGetTime() / 500.0f), 10.0f + sin(timeGetTime() / 500.0f));
-	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+	XMMATRIX m_Orbit = XMMatrixRotationY(rotation); // moltiply or divide for an x value for decrease or increase the speed of the orbit
+	XMMATRIX m_Translate = XMMatrixTranslation(300.f, 300.0f, 0.0f);
 	
+	worldMatrix = XMMatrixMultiply(worldMatrix, m_Translate);
+	worldMatrix = XMMatrixMultiply(worldMatrix, m_Orbit);	
 		
 	// Render the Delta 747 using the light shader.
 	m_Delta747Model->Render(m_D3D->GetDeviceContext());
@@ -465,15 +449,13 @@ bool GraphicsClass::Render()
 	{
 		return false;
 	}
-
 	
 	// Setup the rotation and translation of the Control Tower model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
-	translateMatrix = XMMatrixTranslation(50.0f, 0.0f, 0.0f);
+	translateMatrix = XMMatrixTranslation(200.0f, 0.0f, 0.0f);
 	
-	worldMatrix = XMMatrixScaling(1.5f, 1.5f, 1.5f);
-
+	worldMatrix = XMMatrixScaling(3.5f, 3.5f, 3.5f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
 	// Render the Control Tower model.
@@ -488,7 +470,7 @@ bool GraphicsClass::Render()
 
 	// Setup the rotation and translation of the Airfield model.
 	m_D3D->GetWorldMatrix(worldMatrix);
-	translateMatrix = XMMatrixTranslation(-3.0f, 0.05f, 0.0f);
+	translateMatrix = XMMatrixTranslation(-3.0f, 0.1f, 0.0f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
 	// Render the Airfield model.

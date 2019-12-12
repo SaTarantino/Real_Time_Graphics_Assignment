@@ -47,9 +47,7 @@ public:
 	bool IsSPressed();
 	bool IsIPressed();
 	bool IsKPressed();
-	bool IsUPressed();
 	bool IsJPressed();
-	bool IsOPressed();
 	bool IsLPressed();
 
 private:
