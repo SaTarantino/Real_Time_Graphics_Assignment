@@ -22,7 +22,7 @@
 /////////////
 // GLOBALS //
 /////////////
-const bool FULL_SCREEN = true;
+const bool FULL_SCREEN = false;
 const bool VSYNC_ENABLED = true;
 const float SCREEN_DEPTH = 10000.0f;
 const float SCREEN_NEAR = 0.1f;
@@ -61,6 +61,8 @@ private:
 	ModelClass* m_Delta747Model;
 	ModelClass* m_ControlTower;
 	ModelClass* m_AirfieldModel;
+	ModelClass* m_AsphaltModel;
+	ModelClass* m_BigBuilding;
 };
 
 #endif

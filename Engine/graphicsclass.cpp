@@ -188,13 +188,40 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 		return false;
 	}
 
-	result = m_AirfieldModel->Initialize(m_D3D->GetDevice(), "../Engine/data/bigAirfieldModel.txt", L"../Engine/data/airfieldTexture.dds");
+	result = m_AirfieldModel->Initialize(m_D3D->GetDevice(), "../Engine/data/airfieldModel.txt", L"../Engine/data/airfieldTexture.dds");
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Airfield model.", L"Error", MB_OK);
 		return false;
 	}
 
+	// Create and Inizialize the Big Building model.
+	m_BigBuilding = new ModelClass;
+	if (!m_BigBuilding)
+	{
+		return false;
+	}
+
+	result = m_BigBuilding->Initialize(m_D3D->GetDevice(), "../Engine/data/bigBuilding.txt", L"../Engine/data/bigBuildingTextures.dds");
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the Big Building model.", L"Error", MB_OK);
+		return false;
+	}
+
+	// Create and Inizialize the Asphalt model.
+	m_AsphaltModel = new ModelClass;
+	if (!m_AsphaltModel)
+	{
+		return false;
+	}
+
+	result = m_AsphaltModel->Initialize(m_D3D->GetDevice(), "../Engine/data/asphalt.txt", L"../Engine/data/asphaltTexture.dds");
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the Asphalt model.", L"Error", MB_OK);
+		return false;
+	}
 
 	return true;
 
@@ -237,6 +264,20 @@ void GraphicsClass::Shutdown()
 		m_AirfieldModel->Shutdown();
 		delete m_AirfieldModel;
 		m_AirfieldModel = 0;
+	}
+
+	if (m_BigBuilding)
+	{
+		m_BigBuilding->Shutdown();
+		delete m_BigBuilding;
+		m_BigBuilding = 0;
+	}
+
+	if (m_AsphaltModel)
+	{
+		m_AsphaltModel->Shutdown();
+		delete m_AsphaltModel;
+		m_AsphaltModel = 0;
 	}
 
 	// Release the light object.
@@ -403,9 +444,8 @@ bool GraphicsClass::Render()
 	// Get the position of the camera
 	cameraPosition = m_Camera->GetPosition();
 	
-	// Setup the rotation and translation of the Sky-Domes model.
 
-	//worldMatrix = XMMatrixTranslation(cameraPosition.x, 0, cameraPosition.z);
+	// Setup the rotation and translation of the Sky-Domes model.
 	worldMatrix = XMMatrixScaling(100.f, 100.f, 100.f);
 	
 	// Render the Sky-Domes model using the texture shader.
@@ -416,6 +456,7 @@ bool GraphicsClass::Render()
 	{
 		return false;
 	}
+
 
 	// Setup the rotation and translation of the Terrain model.
 	translateMatrix = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
@@ -430,8 +471,8 @@ bool GraphicsClass::Render()
 		return false;
 	}
 
-	// Setup the rotation and translation of the Delta 747 model.
-	// Move the Delta 747 model.
+
+	// Setup the rotation, translation and movement of the Delta 747 model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
 	XMMATRIX m_Orbit = XMMatrixRotationY(rotation); // moltiply or divide for an x value for decrease or increase the speed of the orbit
@@ -450,6 +491,7 @@ bool GraphicsClass::Render()
 		return false;
 	}
 	
+
 	// Setup the rotation and translation of the Control Tower model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
@@ -468,20 +510,57 @@ bool GraphicsClass::Render()
 		return false;
 	}
 
+
 	// Setup the rotation and translation of the Airfield model.
 	m_D3D->GetWorldMatrix(worldMatrix);
-	translateMatrix = XMMatrixTranslation(-3.0f, 0.1f, 0.0f);
+	translateMatrix = XMMatrixTranslation(-3.0f, 1.f, 0.0f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
 	// Render the Airfield model.
 	m_AirfieldModel->Render(m_D3D->GetDeviceContext());
 	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_AirfieldModel->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-		m_AirfieldModel->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+										m_AirfieldModel->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+										m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	if (!result)
+	{
+		return false;
+	}
+
+
+	// Setup the rotation and translation of the Big Building model.
+	m_D3D->GetWorldMatrix(worldMatrix);
+	translateMatrix = XMMatrixTranslation(500.0f, 0.f, 200.0f);
+	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+
+	// Render the Big Building model.
+	m_BigBuilding->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_BigBuilding->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+										m_BigBuilding->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+										m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	if (!result)
+	{
+		return false;
+	}
+
+
+	// Setup the rotation and translation of the Asphalt model.
+	m_D3D->GetWorldMatrix(worldMatrix);
+	worldMatrix = XMMatrixRotationY(180);
+	worldMatrix = XMMatrixScaling(5.f, 10.f, 1.0f);
+	
+	translateMatrix = XMMatrixTranslation(105.0f, 1.f, 0.0f);
+	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+
+	// Render the Asphalt model.
+	m_AsphaltModel->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_AsphaltModel->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+		m_AsphaltModel->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
 		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 	if (!result)
 	{
 		return false;
 	}
+
 
 	// Present the rendered scene to the screen.
 	m_D3D->EndScene();
