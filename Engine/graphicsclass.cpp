@@ -153,17 +153,17 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 		return false;
 	}
 
-	// Create and Initialize the Delta 747 Model.
+	// Create and Initialize the Tal 16 Model.
 	m_Delta747Model = new ModelClass;
 	if(!m_Delta747Model)
 	{
 		return false;
 	}
 
-	result = m_Delta747Model->Initialize(m_D3D->GetDevice(), "../Engine/data/tal16.txt", L"../Engine/data/metal.dds");
+	result = m_Delta747Model->Initialize(m_D3D->GetDevice(), "../Engine/data/tal16.txt", L"../Engine/data/tal512.dds");
 	if(!result)
 	{
-		MessageBox(hwnd, L"Could not initialize the Delta 747 model.", L"Error", MB_OK);
+		MessageBox(hwnd, L"Could not initialize the Tal 16 model.", L"Error", MB_OK);
 		return false;
 	}
 
@@ -209,14 +209,14 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 		return false;
 	}
 
-	// Create and Inizialize the Asphalt model.
-	m_AsphaltModel = new ModelClass;
-	if (!m_AsphaltModel)
+	// Create and Inizialize the Drone model.
+	m_Drone = new ModelClass;
+	if (!m_Drone)
 	{
 		return false;
 	}
 
-	result = m_AsphaltModel->Initialize(m_D3D->GetDevice(), "../Engine/data/asphalt.txt", L"../Engine/data/asphaltTexture.dds");
+	result = m_Drone->Initialize(m_D3D->GetDevice(), "../Engine/data/drone.txt", L"../Engine/data/droneTexture.dds");
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Asphalt model.", L"Error", MB_OK);
@@ -273,11 +273,11 @@ void GraphicsClass::Shutdown()
 		m_BigBuilding = 0;
 	}
 
-	if (m_AsphaltModel)
+	if (m_Drone)
 	{
-		m_AsphaltModel->Shutdown();
-		delete m_AsphaltModel;
-		m_AsphaltModel = 0;
+		m_Drone->Shutdown();
+		delete m_Drone;
+		m_Drone = 0;
 	}
 
 	// Release the light object.
@@ -419,7 +419,7 @@ bool GraphicsClass::HandleMovementInput(float frameTime)
 
 bool GraphicsClass::Render()
 {
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix;
+	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix, scalingMatrix, orbitMatrix, flipMatrix;
 	XMMATRIX airplaneScale = XMMatrixScaling(0.45f, 0.45f, 0.45f);
 	XMFLOAT3 cameraPosition;
 	
@@ -475,11 +475,12 @@ bool GraphicsClass::Render()
 	// Setup the rotation, translation and movement of the Delta 747 model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
-	XMMATRIX m_Orbit = XMMatrixRotationY(rotation); // moltiply or divide for an x value for decrease or increase the speed of the orbit
-	XMMATRIX m_Translate = XMMatrixTranslation(300.f, 300.0f, 0.0f);
+	orbitMatrix = XMMatrixRotationY(rotation); // moltiply or divide for an x value for decrease or increase the speed of the orbit
+
+	translateMatrix = XMMatrixTranslation(600.0f, 600.0f, 0.0f);
 	
-	worldMatrix = XMMatrixMultiply(worldMatrix, m_Translate);
-	worldMatrix = XMMatrixMultiply(worldMatrix, m_Orbit);	
+	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+	worldMatrix = XMMatrixMultiply(worldMatrix, orbitMatrix);	
 		
 	// Render the Delta 747 using the light shader.
 	m_Delta747Model->Render(m_D3D->GetDeviceContext());
@@ -497,7 +498,7 @@ bool GraphicsClass::Render()
 
 	translateMatrix = XMMatrixTranslation(200.0f, 0.0f, 0.0f);
 	
-	worldMatrix = XMMatrixScaling(3.5f, 3.5f, 3.5f);
+	worldMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
 	// Render the Control Tower model.
@@ -529,7 +530,8 @@ bool GraphicsClass::Render()
 
 	// Setup the rotation and translation of the Big Building model.
 	m_D3D->GetWorldMatrix(worldMatrix);
-	translateMatrix = XMMatrixTranslation(500.0f, 0.f, 200.0f);
+
+	translateMatrix = XMMatrixTranslation(300.0f, 0.f, 500.0f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
 	// Render the Big Building model.
@@ -543,18 +545,24 @@ bool GraphicsClass::Render()
 	}
 
 
-	// Setup the rotation and translation of the Asphalt model.
+	// Setup the rotation and translation of the Drone model.
 	m_D3D->GetWorldMatrix(worldMatrix);
-	worldMatrix = XMMatrixRotationY(180);
-	worldMatrix = XMMatrixScaling(5.f, 10.f, 1.0f);
-	
-	translateMatrix = XMMatrixTranslation(105.0f, 1.f, 0.0f);
-	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
-	// Render the Asphalt model.
-	m_AsphaltModel->Render(m_D3D->GetDeviceContext());
-	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_AsphaltModel->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-		m_AsphaltModel->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+	//flipMatrix = XMMatrixRotationX(rotation);
+	
+	XMMATRIX dronePosition;
+	dronePosition = XMMatrixTranslation(cameraPosition.x + 200.f, cameraPosition.y + 200.f, cameraPosition.z + 0.0f);
+	
+	scalingMatrix = XMMatrixScaling(.1f, .1f, .1f);
+	//translateMatrix = XMMatrixTranslation(-500.0f, 500.f, 0.0f);
+
+	worldMatrix = XMMatrixMultiply(worldMatrix, scalingMatrix);
+	worldMatrix = XMMatrixMultiply(worldMatrix, dronePosition);
+
+	// Render the Drone model.
+	m_Drone->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_Drone->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+		m_Drone->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
 		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 	if (!result)
 	{

@@ -61,7 +61,7 @@ private:
 	ModelClass* m_Delta747Model;
 	ModelClass* m_ControlTower;
 	ModelClass* m_AirfieldModel;
-	ModelClass* m_AsphaltModel;
+	ModelClass* m_Drone;
 	ModelClass* m_BigBuilding;
 };
 
