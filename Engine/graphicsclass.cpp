@@ -433,6 +433,15 @@ bool GraphicsClass::HandleMovementInput(float frameTime)
 	keyDown = m_Input->IsJPressed();
 	m_Position->LookUpward(keyDown);
 
+	keyDown = m_Input->IsF1Pressed();
+	m_Position->Camera1(keyDown);
+
+	keyDown = m_Input->IsF2Pressed();
+	m_Position->Camera2(keyDown);
+
+	keyDown = m_Input->IsF3Pressed();
+	m_Position->Camera0(keyDown);
+
 	// Get the view point position/rotation.
 	m_Position->GetPosition(posX, posY, posZ);
 	m_Position->GetRotation(rotX, rotY, rotZ);
@@ -575,10 +584,13 @@ bool GraphicsClass::Render()
 	// Setup the rotation and translation of the Drone model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
-	translateMatrix = XMMatrixTranslation(cameraPosition.x - 200, cameraPosition.y + 50, cameraPosition.z);
+	// Pass the camera position at the translate matrix.
+	translateMatrix = XMMatrixTranslation(cameraPosition.x, cameraPosition.y + 50, cameraPosition.z);
 	orbitMatrix = XMMatrixRotationY(rotation * 0.5);
 
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+
+	// Make the Drone model rotate from the starting point to the camera position.
 	worldMatrix = XMMatrixMultiply(translateMatrix, orbitMatrix);
 
 	// Render the Drone model.
@@ -594,7 +606,6 @@ bool GraphicsClass::Render()
 	// Setup the rotation and translation of the Predator model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
-	
 	translateMatrix = XMMatrixTranslation(-3.0f, 0.9f, 10.0f);
 	worldMatrix = XMMatrixScaling(0.1f, 0.1f, 0.1f);
 	orbitMatrix = XMMatrixRotationY(rotation * 1);

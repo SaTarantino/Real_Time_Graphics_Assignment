@@ -37,6 +37,10 @@ public:
 	void TurnRight(bool);
 	void LookUpward(bool);
 	void LookDownward(bool);
+	void Camera0(bool);
+	void Camera1(bool);
+	void Camera2(bool);
+
 
 private:
 	float m_positionX, m_positionY, m_positionZ;

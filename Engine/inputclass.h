@@ -49,6 +49,9 @@ public:
 	bool IsKPressed();
 	bool IsJPressed();
 	bool IsLPressed();
+	bool IsF1Pressed();
+	bool IsF2Pressed();
+	bool IsF3Pressed();
 
 private:
 	bool ReadKeyboard();
