@@ -2,6 +2,7 @@
 // Filename: graphicsclass.cpp
 ////////////////////////////////////////////////////////////////////////////////
 #include "graphicsclass.h"
+#include "directxmath.h"
 
 
 GraphicsClass::GraphicsClass()
@@ -14,8 +15,12 @@ GraphicsClass::GraphicsClass()
 	m_Position = 0;
 	m_Camera = 0;
 	m_TerrainModel = 0;
-	m_Delta747Model = 0;
+	m_AirplaneModel = 0;
 	m_ControlTower = 0;
+	m_AirfieldModel = 0;
+	m_Drone = 0;
+	m_BigBuilding = 0;
+	m_PredatorModel = 0;
 }
 
 
@@ -101,7 +106,7 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 	}
 
 	// Set the initial position and rotation of the viewer.
-	m_Position->SetPosition(10.0f, 15.0f, -100.0f);
+	m_Position->SetPosition(1.0f, 15.0f, -200.0f);
 	m_Position->SetRotation(0.0f, 0.0f, 0.0f);
 
 	// Create the camera object.
@@ -140,27 +145,27 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 	}
 
 	// Create and Initialize the Sky-Domes model.
-	m_skyDomes = new ModelClass;
-	if (!m_skyDomes)
+	m_SkyDomes = new ModelClass;
+	if (!m_SkyDomes)
 	{
 		return false;
 	}
 
-	result = m_skyDomes->Initialize(m_D3D->GetDevice(), "../Engine/data/skyDome.txt", L"../Engine/data/skyTexture.dds");
+	result = m_SkyDomes->Initialize(m_D3D->GetDevice(), "../Engine/data/skyDome.txt", L"../Engine/data/skyTexture.dds");
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Sky-Domes model.", L"Error", MB_OK);
 		return false;
 	}
 
-	// Create and Initialize the Tal 16 Model.
-	m_Delta747Model = new ModelClass;
-	if(!m_Delta747Model)
+	// Create and Initialize the Airplane Model.
+	m_AirplaneModel = new ModelClass;
+	if(!m_AirplaneModel)
 	{
 		return false;
 	}
 
-	result = m_Delta747Model->Initialize(m_D3D->GetDevice(), "../Engine/data/tal16.txt", L"../Engine/data/tal512.dds");
+	result = m_AirplaneModel->Initialize(m_D3D->GetDevice(), "../Engine/data/tal16.txt", L"../Engine/data/tal512.dds");
 	if(!result)
 	{
 		MessageBox(hwnd, L"Could not initialize the Tal 16 model.", L"Error", MB_OK);
@@ -216,12 +221,27 @@ bool GraphicsClass::Initialize(HINSTANCE hinstance, HWND hwnd, int screenWidth, 
 		return false;
 	}
 
-	result = m_Drone->Initialize(m_D3D->GetDevice(), "../Engine/data/drone.txt", L"../Engine/data/droneTexture.dds");
+	result = m_Drone->Initialize(m_D3D->GetDevice(), "../Engine/data/smallDrone.txt", L"../Engine/data/smallDroneTexture.dds");
 	if (!result)
 	{
-		MessageBox(hwnd, L"Could not initialize the Asphalt model.", L"Error", MB_OK);
+		MessageBox(hwnd, L"Could not initialize the Drone model.", L"Error", MB_OK);
 		return false;
 	}
+
+	// Create and Inizialize the Predator model.
+	m_PredatorModel = new ModelClass;
+	if (!m_PredatorModel)
+	{
+		return false;
+	}
+
+	result = m_PredatorModel->Initialize(m_D3D->GetDevice(), "../Engine/data/predator.txt", L"../Engine/data/predatorTexture.dds");
+	if (!result)
+	{
+		MessageBox(hwnd, L"Could not initialize the Predator model.", L"Error", MB_OK);
+		return false;
+	}
+
 
 	return true;
 
@@ -238,18 +258,18 @@ void GraphicsClass::Shutdown()
 		m_TerrainModel = 0;
 	}
 
-	if (m_skyDomes)
+	if (m_SkyDomes)
 	{
-		m_skyDomes->Shutdown();
-		delete m_skyDomes;
-		m_skyDomes = 0;
+		m_SkyDomes->Shutdown();
+		delete m_SkyDomes;
+		m_SkyDomes = 0;
 	}
 
-	if(m_Delta747Model)
+	if(m_AirplaneModel)
 	{
-		m_Delta747Model->Shutdown();
-		delete m_Delta747Model;
-		m_Delta747Model = 0;
+		m_AirplaneModel->Shutdown();
+		delete m_AirplaneModel;
+		m_AirplaneModel = 0;
 	}
 
 	if(m_ControlTower)
@@ -278,6 +298,13 @@ void GraphicsClass::Shutdown()
 		m_Drone->Shutdown();
 		delete m_Drone;
 		m_Drone = 0;
+	}
+
+	if (m_PredatorModel)
+	{
+		m_PredatorModel->Shutdown();
+		delete m_PredatorModel;
+		m_PredatorModel = 0;
 	}
 
 	// Release the light object.
@@ -419,8 +446,7 @@ bool GraphicsClass::HandleMovementInput(float frameTime)
 
 bool GraphicsClass::Render()
 {
-	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix, scalingMatrix, orbitMatrix, flipMatrix;
-	XMMATRIX airplaneScale = XMMatrixScaling(0.45f, 0.45f, 0.45f);
+	XMMATRIX worldMatrix, viewMatrix, projectionMatrix, translateMatrix, scalingMatrix, orbitMatrix;
 	XMFLOAT3 cameraPosition;
 	
 	bool result;
@@ -449,9 +475,9 @@ bool GraphicsClass::Render()
 	worldMatrix = XMMatrixScaling(100.f, 100.f, 100.f);
 	
 	// Render the Sky-Domes model using the texture shader.
-	m_skyDomes->Render(m_D3D->GetDeviceContext());
-	result = m_ShaderManager->RenderTextureShader(m_D3D->GetDeviceContext(), m_skyDomes->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-												m_skyDomes->GetTexture());
+	m_SkyDomes->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderTextureShader(m_D3D->GetDeviceContext(), m_SkyDomes->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+												m_SkyDomes->GetTexture());
 	if (!result)
 	{
 		return false;
@@ -472,20 +498,20 @@ bool GraphicsClass::Render()
 	}
 
 
-	// Setup the rotation, translation and movement of the Delta 747 model.
+	// Setup the rotation, translation and movement of the Airplane model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
-	orbitMatrix = XMMatrixRotationY(rotation); // moltiply or divide for an x value for decrease or increase the speed of the orbit
+	orbitMatrix = XMMatrixRotationY(rotation * 0.5); // moltiply or divide for an x value for decrease or increase the speed of the orbit
 
-	translateMatrix = XMMatrixTranslation(600.0f, 600.0f, 0.0f);
+	translateMatrix = XMMatrixTranslation(500.0f, 500.0f, 0.0f);
 	
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
-	worldMatrix = XMMatrixMultiply(worldMatrix, orbitMatrix);	
+	worldMatrix = XMMatrixMultiply(worldMatrix, orbitMatrix);
 		
 	// Render the Delta 747 using the light shader.
-	m_Delta747Model->Render(m_D3D->GetDeviceContext());
-	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_Delta747Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, 
-									   m_Delta747Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), 
+	m_AirplaneModel->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_AirplaneModel->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, 
+									   m_AirplaneModel->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(), 
 									   m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 	if(!result)
 	{
@@ -496,7 +522,7 @@ bool GraphicsClass::Render()
 	// Setup the rotation and translation of the Control Tower model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
-	translateMatrix = XMMatrixTranslation(200.0f, 0.0f, 0.0f);
+	translateMatrix = XMMatrixTranslation(-100.0f, 0.0f, 50.0f);
 	
 	worldMatrix = XMMatrixScaling(4.f, 4.f, 4.f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
@@ -514,6 +540,7 @@ bool GraphicsClass::Render()
 
 	// Setup the rotation and translation of the Airfield model.
 	m_D3D->GetWorldMatrix(worldMatrix);
+
 	translateMatrix = XMMatrixTranslation(-3.0f, 1.f, 0.0f);
 	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
 
@@ -548,22 +575,38 @@ bool GraphicsClass::Render()
 	// Setup the rotation and translation of the Drone model.
 	m_D3D->GetWorldMatrix(worldMatrix);
 
-	//flipMatrix = XMMatrixRotationX(rotation);
-	
-	XMMATRIX dronePosition;
-	dronePosition = XMMatrixTranslation(cameraPosition.x + 200.f, cameraPosition.y + 200.f, cameraPosition.z + 0.0f);
-	
-	scalingMatrix = XMMatrixScaling(.1f, .1f, .1f);
-	//translateMatrix = XMMatrixTranslation(-500.0f, 500.f, 0.0f);
+	translateMatrix = XMMatrixTranslation(cameraPosition.x - 200, cameraPosition.y + 50, cameraPosition.z);
+	orbitMatrix = XMMatrixRotationY(rotation * 0.5);
 
-	worldMatrix = XMMatrixMultiply(worldMatrix, scalingMatrix);
-	worldMatrix = XMMatrixMultiply(worldMatrix, dronePosition);
+	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+	worldMatrix = XMMatrixMultiply(translateMatrix, orbitMatrix);
 
 	// Render the Drone model.
 	m_Drone->Render(m_D3D->GetDeviceContext());
 	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_Drone->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
-		m_Drone->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
-		m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+										m_Drone->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+										m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	if (!result)
+	{
+		return false;
+	}
+
+	// Setup the rotation and translation of the Predator model.
+	m_D3D->GetWorldMatrix(worldMatrix);
+
+	
+	translateMatrix = XMMatrixTranslation(-3.0f, 0.9f, 10.0f);
+	worldMatrix = XMMatrixScaling(0.1f, 0.1f, 0.1f);
+	orbitMatrix = XMMatrixRotationY(rotation * 1);
+
+	worldMatrix = XMMatrixMultiply(worldMatrix, translateMatrix);
+	worldMatrix = XMMatrixMultiply(worldMatrix, orbitMatrix);
+
+	// Render the Predetor model.
+	m_PredatorModel->Render(m_D3D->GetDeviceContext());
+	result = m_ShaderManager->RenderLightShader(m_D3D->GetDeviceContext(), m_PredatorModel->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix,
+										m_PredatorModel->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+										m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
 	if (!result)
 	{
 		return false;
