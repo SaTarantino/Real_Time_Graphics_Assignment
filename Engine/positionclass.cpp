@@ -351,28 +351,29 @@ void PositionClass::LookDownward(bool keydown)
 	return;
 }
 
-// Set the camera in different point.
-
+// Camera 0 key F3.
 void PositionClass::Camera0(bool keydown)
 {
 	if (keydown)
 	{
-		SetPosition(1.0f, 15.0f, -200.0f);
-		SetRotation(0.0f, 0.0f, 0.0f);
+		SetPosition(1.f, 15.f, -200.f);
+		SetRotation(0.f, 0.f, 0.f);
 	}
 }
 
+// Camera 1 key F1
 void PositionClass::Camera1(bool keydown)
 {
 	if (keydown)
 	{
-		SetPosition(200.f, 350.f, -500.f);
-		SetRotation(15.f, 0.f, 0.f);
+		SetPosition(900.f, 350.f, 200.f);
+		SetRotation(5.f, -90.f, 0.f);
 	}
 
 	return;
 }
 
+// Camera 2 key F1
 void PositionClass::Camera2(bool keydown)
 {
 	if (keydown)
